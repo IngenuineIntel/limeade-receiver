@@ -4,7 +4,54 @@ use std::thread;
 use std::time::Duration;
 
 mod compat;
+mod config;
 use compat::*;
+
+
+
+#[allow(nonstandard_style)]
+fn handle_packet(pkt: limeade_packet_data) -> bool {
+
+  match unsafe { pkt.__bindgen_anon_1.packet_type } as u32 {
+    limeade_packet_LIMEADE_PACKET_INTRODUCTION => {
+      // TODO
+      println!("INTRO from client");
+    }
+
+    limeade_packet_LIMEADE_PACKET_ACKNOWLEDGE => {
+      println!("ACK from client");
+      // TODO
+    }
+
+    limeade_packet_LIMEADE_PACKET_EVENTS => {
+      println!("EVENTS from client");
+      // TODO
+    }
+
+    limeade_packet_LIMEADE_PACKET_PROC_GENERIC => {
+      println!("PROC GENERIC from client");
+      // TODO
+    }
+
+    limeade_packet_LIMEADE_PACKET_PROC_UPDATE => {
+      println!("PROC UPDATE from client");
+      // TODO
+    }
+
+    limeade_packet_LIMEADE_PACKET_PERF => {
+      println!("PERF from client");
+      // TODO
+    }
+
+    limeade_packet_LIMEADE_PACKET_CLOSE => {
+      println!("CLOSE from client");
+      // TODO
+    }
+
+    _ => return false
+  }
+  true
+}
 
 // due to the FFI I don't really have control over this, so
 #[allow(nonstandard_style)]
@@ -34,46 +81,10 @@ fn main() {
       continue;
     }
 
-    let pkt_type = unsafe { recvd.__bindgen_anon_1.packet_type } as u32;
+    handle_packet(recvd).then(|| {
 
-    match pkt_type {
-      limeade_packet_LIMEADE_PACKET_INTRODUCTION => {
-        // TODO
-        println!("introduction packet received");
-      }
-      
-      limeade_packet_LIMEADE_PACKET_ACKNOWLEDGE => {
-        // TODO
-        println!("acknowledgement packet received");
-      }
-
-      limeade_packet_LIMEADE_PACKET_EVENTS => {
-        // TODO
-        println!("events packet received");
-      }
-
-      limeade_packet_LIMEADE_PACKET_PROC_GENERIC => {
-        // TODO
-        println!("generic process packet received");
-      }
-
-      limeade_packet_LIMEADE_PACKET_PROC_UPDATE => {
-        // TODO
-        println!("process update packet received");
-      }
-
-      limeade_packet_LIMEADE_PACKET_PERF => {
-        // TODO
-        println!("performance packet received");
-      }
-
-      limeade_packet_LIMEADE_PACKET_CLOSE => {
-        // TODO
-        println!("close packet received");
-      }
-
-      _ => eprintln!("unknown packet type: {pkt_type}"),
-    }
+      // TODO
+    });
 
     unsafe { limeade_release_recvd(&mut recvd) };
   }
