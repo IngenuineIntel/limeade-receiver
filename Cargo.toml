@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 configparser="3.3.0"
+chrono="0.4.45"
 
 [build-dependencies]
 bindgen = "0.73"

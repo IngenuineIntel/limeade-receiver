@@ -5,9 +5,10 @@ use std::time::Duration;
 
 mod compat;
 mod config;
+mod log;
+
 use compat::*;
-
-
+use log::{info, errr};
 
 #[allow(nonstandard_style)]
 fn handle_packet(pkt: limeade_packet_data) -> bool {
@@ -15,36 +16,36 @@ fn handle_packet(pkt: limeade_packet_data) -> bool {
   match unsafe { pkt.__bindgen_anon_1.packet_type } as u32 {
     limeade_packet_LIMEADE_PACKET_INTRODUCTION => {
       // TODO
-      println!("INTRO from client");
+      info!("INTRO from client");
     }
 
     limeade_packet_LIMEADE_PACKET_ACKNOWLEDGE => {
-      println!("ACK from client");
+      info!("ACK from client");
       // TODO
     }
 
     limeade_packet_LIMEADE_PACKET_EVENTS => {
-      println!("EVENTS from client");
+      info!("EVENTS from client");
       // TODO
     }
 
     limeade_packet_LIMEADE_PACKET_PROC_GENERIC => {
-      println!("PROC GENERIC from client");
+      info!("PROC GENERIC from client");
       // TODO
     }
 
     limeade_packet_LIMEADE_PACKET_PROC_UPDATE => {
-      println!("PROC UPDATE from client");
+      info!("PROC UPDATE from client");
       // TODO
     }
 
     limeade_packet_LIMEADE_PACKET_PERF => {
-      println!("PERF from client");
+      info!("PERF from client");
       // TODO
     }
 
     limeade_packet_LIMEADE_PACKET_CLOSE => {
-      println!("CLOSE from client");
+      info!("CLOSE from client");
       // TODO
     }
 
@@ -64,19 +65,19 @@ fn main() {
      limeade_compression_mode_LIMEADE_MODE_NO_COMPRESSION) as i32) };
 
   if ret != limeade_error_LIMEADE_SUCCESS as i32 {
-    eprintln!("limeade_init failed: {ret}");
+    errr!("limeade_init failed: {ret}");
   }
 
   let ret = unsafe { limeade_connect(&mut ctx) };
   if ret != limeade_error_LIMEADE_SUCCESS as i32 {
-    eprintln!("limeade_connect failed: {ret}");
+    errr!("limeade_connect failed: {ret}");
   }
     
   loop {
     let ret = unsafe { limeade_recv_wait(&mut ctx, &mut recvd, 2000) };
 
     if ret != limeade_error_LIMEADE_SUCCESS as i32 {
-      eprintln!("limeade_recv_wait failed: {ret}");
+      errr!("limeade_recv_wait failed: {ret}");
       thread::sleep(Duration::from_millis(100));
       continue;
     }
