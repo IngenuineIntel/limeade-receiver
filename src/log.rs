@@ -33,38 +33,42 @@ macro_rules! log_out {
   }
 }
 
+#[macro_export]
 macro_rules! timestamp {
   () => { format_args!("[{}{}{}]", ANSI_BLUE, get_time(), ANSI_RESET) }
 }
 
-pub(crate) fn write_log(level: &str, message: std::fmt::Arguments<'_>) {
-    let color = match level {
-        "DBUG" => ANSI_CYAN,
-        "INFO" => ANSI_GREEN,
-        "WARN" => ANSI_YELLOW,
-        "CRIT" | "ERRR" => ANSI_RED,
-        _ => ANSI_RESET,
-    };
-    let mut output = LOGGING_FD.lock().unwrap();
-    writeln!(output.get_or_insert_with(|| Box::new(io::stdout())), "[{}{}{}][{}{}{}]: {message}", ANSI_BLUE, get_time(), ANSI_RESET, color, level, ANSI_RESET).unwrap();
+#[macro_export]
+macro_rules! dbg {
+  ($($args:tt)*) => {
+    writeln!(log_out!(), "{}[{}DBUG{}]: {}", timestamp!(), ANSI_CYAN, ANSI_RESET, format_args!($($args)*));
+  }
 }
 
-pub(crate) fn dbg(level: &str, message: std::fmt::Arguments<'_>) {
-  writeln!(log_out!(), "{}[{}DBUG{}]: {}", timestamp!(), ANSI_CYAN, ANSI_RESET, message);
+#[macro_export]
+macro_rules! info {
+  ($($args:tt)*) => {
+    writeln!(log_out!(), "{}[{}INFO{}]: {}", timestamp!(), ANSI_GREEN, ANSI_RESET, format_args!($($args)*));
+  }
 }
 
-pub(crate) fn info(level: &str, message: std::fmt::Arguments<'_>) {
-  writeln!(log_out!(), "{}[{}INFO{}]: {}", timestamp!(), ANSI_GREEN, ANSI_RESET, message);
+#[macro_export]
+macro_rules! warn {
+  ($($args:tt)*) => {
+    writeln!(log_out!(), "{}[{}WARN{}]: {}", timestamp!(), ANSI_YELLOW, ANSI_RESET, format_args!($($args)*));
+  }
 }
 
-pub(crate) fn warn(level: &str, message: std::fmt::Arguments<'_>) {
-  writeln!(log_out!(), "{}[{}WARN{}]: {}", timestamp!(), ANSI_YELLOW, ANSI_RESET, message);
+#[macro_export]
+macro_rules! crit {
+  ($($args:tt)*) => {
+    writeln!(log_out!(), "{}[{}CRIT{}]: {}", timestamp!(), ANSI_RED, ANSI_RESET, format_args!($($args)*));
+  }
 }
 
-pub(crate) fn crit(level: &str, message: std::fmt::Arguments<'_>) {
-  writeln!(log_out!(), "{}[{}CRIT{}]: {}", timestamp!(), ANSI_RED, ANSI_RESET, message);
-}
-
-pub(crate) fn err(level: &str, message: std::fmt::Arguments<'_>) {
-  writeln!(log_out!(), "{}[{}ERRR{}]: {}", timestamp!(), ANSI_RED, ANSI_RESET, message);
+#[macro_export]
+macro_rules! err {
+  ($($args:tt)*) => {
+    writeln!(log_out!(), "{}[{}ERRR{}]: {}", timestamp!(), ANSI_RED, ANSI_RESET, format_args!($($args)*));
+  }
 }
