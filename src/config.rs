@@ -8,7 +8,7 @@ use configparser::ini::Ini;
 
 const CONFIG_FILE: &'static str = "/etc/limeade/limeade-receiver.ini";
 
-struct GlobalConfig {
+pub struct GlobalConfig {
   db_directory: String,
   log_file: String,
 }
@@ -53,6 +53,14 @@ impl GlobalConfig {
     }
     .populate_from_config()
     .populate_from_dflt()
+  }
+
+  pub fn db_directory(&self) -> &str {
+    &self.db_directory
+  }
+
+  pub fn log_file(&self) -> &str {
+    &self.log_file
   }
 
   pub fn reload(mut self) -> Self {

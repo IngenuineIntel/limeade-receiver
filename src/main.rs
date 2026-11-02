@@ -1,5 +1,6 @@
 // main.rs
 
+use std::fs::File;
 use std::thread;
 use std::time::Duration;
 
@@ -8,6 +9,7 @@ mod config;
 mod log;
 
 use compat::*;
+use config::GlobalConfig;
 
 #[allow(nonstandard_style)]
 fn handle_packet(pkt: limeade_packet_data) -> bool {
@@ -56,6 +58,20 @@ fn handle_packet(pkt: limeade_packet_data) -> bool {
 // due to the FFI I don't really have control over this, so
 #[allow(nonstandard_style)]
 fn main() {
+  let config = GlobalConfig::new();
+  let log_file = match File::create(config.log_file()) {
+    Ok(file) => file,
+    Err(err) => {
+      eprintln!("failed to open log file '{}': {err}", config.log_file());
+      std::process::exit(1);
+    }
+  };
+  log::log_init(Some(log_file));
+
+  dbg!("db_directory: {}", config.db_directory());
+  dbg!("log_file:     {}", config.log_file());
+  
+
   let mut ctx:   limeade_context     = unsafe { std::mem::zeroed() };
   let mut recvd: limeade_packet_data = unsafe { std::mem::zeroed() };
 
