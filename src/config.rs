@@ -2,7 +2,8 @@
 // config file management
 
 use std::env;
-use std::fs;
+use std::fs::File;
+use std::io::Read;
 
 use configparser::ini::Ini;
 
@@ -13,17 +14,21 @@ pub struct GlobalConfig {
   log_file: String,
 }
 
-const CONFIG_DFLT_DB_DIRECTORY: &'static str = "./limeade-receiver-db";
-const CONFIG_DFLT_LOG_FILE:     &'static str = "./limeade-logfile.log";
+const CONFIG_DFLT_DB_DIRECTORY: &'static str = "/etc/limeade/history";
+const CONFIG_DFLT_LOG_FILE:     &'static str = "/etc/limeade/history/limeade-receiver.log";
 
 impl GlobalConfig {
 
-  fn populate_from_config(mut self) -> Self {
+  fn populate_from_config(mut self, file: Option<File>) -> Self {
     let mut config = Ini::new();
 
-    let Ok(data) = fs::read_to_string(CONFIG_FILE) else {
+    let mut data = String::new();
+    let Some(mut file) = file.or_else(|| File::open(CONFIG_FILE).ok()) else {
       return self;
     };
+    if file.read_to_string(&mut data).is_err() {
+      return self;
+    }
     if let Err(_) = config.read(data) {
       return self
     }
@@ -46,12 +51,12 @@ impl GlobalConfig {
     self
   }
 
-  pub fn new() -> Self {
+  pub fn new(file: Option<File>) -> Self {
     GlobalConfig {
       db_directory: String::new(),
       log_file: String::new(),
     }
-    .populate_from_config()
+    .populate_from_config(file)
     .populate_from_dflt()
   }
 
@@ -64,7 +69,7 @@ impl GlobalConfig {
   }
 
   pub fn reload(mut self) -> Self {
-    self.populate_from_config()
+    self.populate_from_config(None)
   }
 }
 
@@ -74,9 +79,21 @@ mod tests {
 
   #[test]
   fn test_config() {
-    let c = GlobalConfig::new();
+    let c = GlobalConfig::new(None);
     println!("db_directory from conf: {0}", c.db_directory);
     println!("logfile from conf: {0}", c.log_file);
+  }
+
+  #[test]
+  fn test_output_defaults_use_history_directory() {
+    let c = GlobalConfig {
+      db_directory: String::new(),
+      log_file: String::new(),
+    }
+    .populate_from_dflt();
+
+    assert_eq!(c.db_directory(), "/etc/limeade/history");
+    assert_eq!(c.log_file(), "/etc/limeade/history/limeade-receiver.log");
   }
 }
 
