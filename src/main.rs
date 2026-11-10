@@ -1,5 +1,10 @@
 // main.rs
 
+const VERSION: &'static str = "v0.1";
+const MAINTAINER: &'static str = "IngenuineIntel";
+const LICENSE: &'static str = "AGPLv3";
+const COPYRIGHT: &'static str = "Copyright (c) 2026 Roan Rothrock";
+
 use std::fs::{File, OpenOptions};
 use std::{thread, time::Duration};
 
@@ -7,8 +12,6 @@ mod compat;
 mod config;
 mod db;
 mod log;
-mod packet;
-mod store;
 
 use compat::limeade;
 use config::GlobalConfig;
@@ -28,6 +31,11 @@ fn main() {
             Err(_) => Some(File::open("/tmp/limeade-receiver.log").expect("Failed to start log!")),
         },
     );
+
+    info!("Limeade Receiver {VERSION}");
+    info!("Courtesy of {MAINTAINER}");
+    info!("{COPYRIGHT}");
+    warn!("Licensed under the {LICENSE} license");
 
     let store = match PacketSerializer::connect(config.db_directory()) {
         Ok(store) => store,
@@ -49,13 +57,15 @@ fn main() {
 
     loop {
         match limeade::recv_wait(&mut ctx, 2000) {
-            Ok(mut recvd) => match store.handle_packet(&mut recvd) {
-                Ok(()) => {}
-                Err(error) => {
-                    err!("Failed to serialize packet: {error}");
-                    break;
-                }
-            },
+            Ok(mut recvd) => {
+                match store.handle_packet(&mut recvd) {
+                    Ok(()) => {}
+                    Err(error) => {
+                        err!("Failed to serialize packet: {error}");
+                    }
+                };
+                limeade::release_recvd(&mut recvd);
+            }
             Err(limeade::Error { code, message }) => {
                 if code != limeade::ERROR_NO_DATA as u32 {
                     err!("Failed to receive packet: {message}");
@@ -64,6 +74,9 @@ fn main() {
             }
         }
     }
+
+    limeade::destruct(&mut ctx);
+
 }
 
 /*

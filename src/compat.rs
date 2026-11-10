@@ -1,3 +1,5 @@
+#![allow(dead_code, nonstandard_style, unused_variables)]
+
 // compat.rs
 // shims for liblimeade
 
@@ -14,18 +16,14 @@ pub mod limeade {
     pub type Context = raw_lib::limeade_context;
     pub type PacketData = raw_lib::limeade_packet_data;
     pub type Intro = raw_lib::limeade_introduction;
-    pub type Ack = raw_lib::limeade_acknowledge;
     pub type Events = raw_lib::limeade_events;
-    pub type Event = raw_lib::limeade_indiv_event;
     pub type Procs = raw_lib::limeade_proc_generic;
-    pub type Proc = raw_lib::limeade_indiv_proc;
     pub type Perf = raw_lib::limeade_perf;
 
     pub const TYPE_INTRO: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_INTRODUCTION as u8;
     pub const TYPE_EVENTS: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_EVENTS as u8;
     pub const TYPE_PROC: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_PROC_GENERIC as u8;
     pub const TYPE_PERF: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_PERF as u8;
-    pub const TYPE_CLOSE: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_CLOSE as u8;
 
     pub const ERROR_NO_DATA: u8 = raw_lib::limeade_error_LIMEADE_ERROR_NO_DATA as u8;
 
@@ -43,10 +41,6 @@ pub mod limeade {
                     .into_owned()
             };
             Self { code, message }
-        }
-
-        pub fn code(&self) -> u32 {
-            self.code
         }
     }
 
@@ -95,12 +89,23 @@ pub mod limeade {
         Ok(ctx)
     }
 
+    pub fn release_recvd(recvd: &mut PacketData) {
+        unsafe { raw_lib::limeade_release_recvd(recvd) }
+    }
+
+    pub fn destruct(ctx: &mut Context) {
+        unsafe { raw_lib::limeade_destruct(ctx) }
+    }
+
     pub fn recv_wait(ctx: &mut Context, wait_time: i32) -> Result<PacketData, Error> {
         unsafe {
-            let recvd: PacketData = std::mem::zeroed();
+            let mut recvd: PacketData = std::mem::zeroed();
             match raw_lib::limeade_recv_wait(ctx, &mut recvd, wait_time) as u32 {
                 LIMEADE_OK!() => Ok(recvd),
-                e => Err(Error::from_code(e)),
+                e => {
+                    release_recvd(&mut recvd);
+                    return Err(Error::from_code(e));
+                }
             }
         }
     }
@@ -154,13 +159,5 @@ pub mod limeade {
                 e => Err(Error::from_code(e)),
             }
         }
-    }
-
-    pub fn release_recvd(recvd: &mut PacketData) {
-        unsafe { raw_lib::limeade_release_recvd(recvd) }
-    }
-
-    pub fn destruct(ctx: &mut Context) {
-        unsafe { raw_lib::limeade_destruct(ctx) }
     }
 }
