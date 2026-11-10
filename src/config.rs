@@ -1,7 +1,6 @@
 // config.rs
 // config file management
 
-use std::env;
 use std::fs::File;
 use std::io::Read;
 
@@ -66,10 +65,6 @@ impl GlobalConfig {
 
   pub fn log_file(&self) -> &str {
     &self.log_file
-  }
-
-  pub fn reload(mut self) -> Self {
-    self.populate_from_config(None)
   }
 }
 

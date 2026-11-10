@@ -26,6 +26,7 @@ fn main() {
         .clang_arg(format!("-I{}", include_dir.display()))
         .allowlist_function("limeade_.*")
         .allowlist_type("limeade_.*")
+        .allowlist_var("LIMEADE_ERROR_REPRS")
         .generate()
         .expect("Failed to generate bindings for liblimeade");
     let out = PathBuf::from(std::env::var("OUT_DIR").unwrap());

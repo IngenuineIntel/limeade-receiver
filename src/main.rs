@@ -1,7 +1,7 @@
 // main.rs
 
 use std::fs::{File, OpenOptions};
-use std::{thread, time::Duration};
+//use std::{thread, time::Duration};
 
 mod compat;
 mod config;
@@ -9,11 +9,34 @@ mod log;
 mod packet;
 mod store;
 
-use compat::*;
+use compat::limeade;
 use config::GlobalConfig;
 
-// due to the FFI I don't really have control over this, so
-#[allow(nonstandard_style)]
+fn main() {
+    /* Initializes configuration for the program */
+    let config_file = File::open("/etc/limeade/limeade-receiver.ini").ok();
+    let config = GlobalConfig::new(config_file);
+    log::log_init(
+        match OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(config.log_file())
+        {
+            Ok(fd) => Some(fd),
+            Err(_) => Some(File::open("/tmp/limeade-receiver.log").expect("Failed to start log!")),
+        },
+    );
+
+    let ctx = match limeade::init() {
+        Ok(ctx) => ctx,
+      Err(error) => {
+        err!("{error}");
+            std::process::exit(1);
+        }
+    };
+}
+
+/*
 fn main() {
   let config_file = File::open("/tmp/limeade-receiver.ini").ok();
   let config = GlobalConfig::new(config_file);
@@ -85,3 +108,4 @@ fn main() {
   unsafe { limeade_destruct(&mut ctx) };
 }
 
+*/
