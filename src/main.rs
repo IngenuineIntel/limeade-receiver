@@ -6,6 +6,7 @@ const LICENSE: &'static str = "AGPLv3";
 const COPYRIGHT: &'static str = "Copyright (c) 2026 Roan Rothrock";
 
 use std::fs::{File, OpenOptions};
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::{thread, time::Duration};
 
 mod compat;
@@ -17,20 +18,24 @@ use compat::limeade;
 use config::GlobalConfig;
 use db::db::PacketSerializer;
 
+fn open_log_file(path: &str) -> std::io::Result<File> {
+  match OpenOptions::new().append(true).create_new(true).mode(0o600).open(path) {
+    Ok(file) => {
+      file.set_permissions(std::fs::Permissions::from_mode(0o660))?;
+      Ok(file)
+    }
+    Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+      OpenOptions::new().append(true).open(path)
+    }
+    Err(error) => Err(error),
+  }
+}
+
 fn main() {
     /* Initializes configuration for the program */
     let config_file = File::open("/etc/limeade/limeade-receiver.ini").ok();
     let config = GlobalConfig::new(config_file);
-    log::log_init(
-        match OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(config.log_file())
-        {
-            Ok(fd) => Some(fd),
-            Err(_) => Some(File::open("/tmp/limeade-receiver.log").expect("Failed to start log!")),
-        },
-    );
+    log::log_init(open_log_file(config.log_file()).ok());
 
     info!("Limeade Receiver {VERSION}");
     info!("Courtesy of {MAINTAINER}");
@@ -78,6 +83,32 @@ fn main() {
 
     limeade::destruct(&mut ctx);
 
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use std::io::Write;
+
+  #[test]
+  fn log_file_is_group_writable_and_appends() {
+    let directory = std::env::temp_dir().join(format!(
+      "limeade-receiver-log-test-{}-{}",
+      std::process::id(),
+      std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    std::fs::create_dir(&directory).unwrap();
+    let path = directory.join("receiver.log");
+    let path = path.to_str().unwrap();
+    let mut first = open_log_file(path).unwrap();
+    assert_eq!(first.metadata().unwrap().permissions().mode() & 0o777, 0o660);
+    first.write_all(b"first").unwrap();
+    open_log_file(path).unwrap().write_all(b" second").unwrap();
+    first.write_all(b" third").unwrap();
+    assert_eq!(std::fs::read_to_string(path).unwrap(), "first second third");
+    assert!(open_log_file(&directory.join("missing/log").to_string_lossy()).is_err());
+    std::fs::remove_dir_all(directory).unwrap();
+  }
 }
 
 /*

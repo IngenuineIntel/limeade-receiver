@@ -4,6 +4,7 @@ INSERT INTO events (
     ts_s
   , ts_ms
   , pid
+  , syscall
   , arg1
   , arg2
   , retval
@@ -14,5 +15,6 @@ INSERT INTO events (
   , ?4
   , ?5
   , ?6
+  , ?7
 );
 

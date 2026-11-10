@@ -19,6 +19,7 @@ CREATE TABLE events (
   , ts_s INTEGER NOT NULL
   , ts_ms INTEGER NOT NULL
   , pid INTEGER NOT NULL
+  , syscall TEXT NOT NULL
   , arg1 TEXT
   , arg2 TEXT
   , retval INTEGER NOT NULL
@@ -52,7 +53,9 @@ CREATE TABLE procs (
 );
 
 CREATE TABLE perf (
-    perc_cpu_user INTEGER NOT NULL
+    ts_s INTEGER NOT NULL
+  , ts_ms INTEGER NOT NULL
+  , perc_cpu_user INTEGER NOT NULL
   , perc_cpu_sys INTEGER NOT NULL
   , mem_total_kb INTEGER NOT NULL
   , mem_free_kb INTEGER NOT NULL

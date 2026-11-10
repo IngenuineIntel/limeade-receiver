@@ -7,6 +7,7 @@ sudo rm /usr/local/bin/limeade-receiver /usr/local/sbin/limeade-receiver
 sudo cp ./target/release/limeade-receiver /usr/local/bin/limeade-receiver
 sudo ln -s /usr/local/bin/limeade-receiver /usr/local/sbin/limeade-receiver
 
+sudo install -d -o root -g limeade -m 2750 /etc/limeade /etc/limeade/ssh
 if ! sudo test -e /etc/limeade/ssh/id_ed25519; then
 	sudo ssh-keygen -q -t ed25519 -N "" -f /etc/limeade/ssh/id_ed25519
 fi

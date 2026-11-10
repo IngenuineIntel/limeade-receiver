@@ -9,7 +9,7 @@ pub(crate) static LOGGING_FD: Mutex<Option<Box<dyn Write + Send>>> = Mutex::new(
 pub fn log_init(stream: Option<File>) {
     let output: Box<dyn Write + Send> = match stream {
         Some(file) => Box::new(file),
-        None => Box::new(io::stdout()),
+        None => Box::new(io::stderr()),
     };
     *LOGGING_FD.lock().unwrap() = Some(output);
 }
