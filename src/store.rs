@@ -1,6 +1,5 @@
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Write};
-use std::os::unix::fs::OpenOptionsExt;
 use std::path::PathBuf;
 
 pub struct RecordStore {
@@ -38,7 +37,6 @@ impl RecordStore {
             OpenOptions::new()
                 .create(true)
                 .append(true)
-                .mode(0o660)
                 .open(self.directory.join(format!("{name}.jsonl")))?,
         );
         Ok(())
@@ -52,7 +50,6 @@ impl RecordStore {
                     OpenOptions::new()
                         .create(true)
                         .append(true)
-                        .mode(0o660)
                         .open(self.directory.join("unknown.jsonl"))?,
                 );
                 self.file.as_mut().unwrap()
