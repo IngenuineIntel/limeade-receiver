@@ -29,16 +29,26 @@ mod db {
         }
 
 
-        fn handle_packet(self, pkt: limeade::PacketData) -> Result<(), Box<dyn std::error::Error>> {
-          unsafe {
-              match pkt.__bindgen_anon_1.packet_type {
-                limeade::TYPE_INTRO  => {},
-                limeade::TYPE_EVENTS => {},
-                limeade::TYPE_PROC   => {},
-                limeade::TYPE_PERF   => {},
+        fn handle_packet(self, pkt: &mut limeade::PacketData) -> Result<(), Box<dyn std::error::Error>> {
+            match limeade::pkt_type(pkt) {
+                limeade::TYPE_INTRO  => {
+                    let intro = limeade::parse_intro(pkt)?;
+                    // TODO shove intro attributes into SQL
+                },
+                limeade::TYPE_EVENTS => {
+                    let events = limeade::parse_events(pkt)?;
+                    // TODO shove event attributes into SQL
+                },
+                limeade::TYPE_PROC   => {
+                    let procs = limeade::parse_proc(pkt)?;
+                    // TODO shove proc attributes into SQL
+                },
+                limeade::TYPE_PERF   => {
+                    let perf = limeade::parse_perf(pkt)?;
+                    // TODO shove perf attributes into SQL
+                },
                 _ => {},
-              }
-          }
+            }
           Ok(())
         }
     }
