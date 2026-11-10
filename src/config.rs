@@ -13,7 +13,7 @@ pub struct GlobalConfig {
   log_file: String,
 }
 
-const CONFIG_DFLT_DB_DIRECTORY: &'static str = "/etc/limeade/history";
+const CONFIG_DFLT_DB_DIRECTORY: &'static str = "/etc/limeade/history/";
 const CONFIG_DFLT_LOG_FILE:     &'static str = "/etc/limeade/history/limeade-receiver.log";
 
 impl GlobalConfig {

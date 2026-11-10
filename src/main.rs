@@ -5,6 +5,7 @@ use std::fs::{File, OpenOptions};
 
 mod compat;
 mod config;
+mod db;
 mod log;
 mod packet;
 mod store;
