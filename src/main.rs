@@ -1,6 +1,7 @@
 // main.rs
 
 use std::fs::{File, OpenOptions};
+use std::{thread, time::Duration};
 
 mod compat;
 mod config;
@@ -35,7 +36,9 @@ fn main() {
 
   dbg!("db_directory: {}", config.db_directory());
   dbg!("log_file:     {}", config.log_file());
-  
+  dbg!("IM HERE TOO");
+
+  //thread::sleep(Duration::from_millis(1000));
 
   let mut ctx: limeade_context = unsafe { std::mem::zeroed() };
   let mut recvd: limeade_packet_data = unsafe { std::mem::zeroed() };
