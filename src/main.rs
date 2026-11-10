@@ -36,6 +36,7 @@ fn main() {
     info!("Courtesy of {MAINTAINER}");
     info!("{COPYRIGHT}");
     warn!("Licensed under the {LICENSE} license");
+    dbg!("Debugging is enabled");
 
     let store = match PacketSerializer::connect(config.db_directory()) {
         Ok(store) => store,
