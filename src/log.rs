@@ -63,13 +63,16 @@ macro_rules! warn {
 #[macro_export]
 macro_rules! crit {
   ($($args:tt)*) => {
-    writeln!(crate::log_out!(), "{}[{}CRIT{}]: {}", timestamp!(), crate::log::ANSI_RED, crate::log::ANSI_RESET, format_args!($($args)*))
+    let _ = writeln!(crate::log_out!(), "{}[{}CRIT{}]: {}", timestamp!(), crate::log::ANSI_RED, crate::log::ANSI_RESET, format_args!($($args)*));
   }
 }
 
 #[macro_export]
 macro_rules! err {
   ($($args:tt)*) => {
-    writeln!(crate::log_out!(), "{}[{}ERRR{}]: {}", timestamp!(), crate::log::ANSI_RED, crate::log::ANSI_RESET, format_args!($($args)*))
+    let _ = writeln!(crate::log_out!(), "{}[{}ERRR{}]: {}", timestamp!(), crate::log::ANSI_RED, crate::log::ANSI_RESET, format_args!($($args)*));
   }
 }
+
+// TODO build test
+

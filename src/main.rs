@@ -1,6 +1,7 @@
 // main.rs
 
 use std::fs::{File, OpenOptions};
+use std::os::unix::fs::OpenOptionsExt;
 use std::{thread, time::Duration};
 
 mod compat;
@@ -17,7 +18,7 @@ use config::GlobalConfig;
 fn main() {
   let config_file = File::open("/tmp/limeade-receiver.ini").ok();
   let config = GlobalConfig::new(config_file);
-  let log_file = match OpenOptions::new().create(true).append(true).open(config.log_file()) {
+  let log_file = match OpenOptions::new().create(true).append(true).mode(0o660).open(config.log_file()) {
     Ok(file) => file,
     Err(err) => {
       eprintln!("failed to open log file '{}': {err}", config.log_file());
@@ -36,7 +37,6 @@ fn main() {
 
   dbg!("db_directory: {}", config.db_directory());
   dbg!("log_file:     {}", config.log_file());
-  dbg!("IM HERE TOO");
 
   //thread::sleep(Duration::from_millis(1000));
 

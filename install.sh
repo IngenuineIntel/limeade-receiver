@@ -12,10 +12,11 @@ if ! sudo test -e /etc/limeade/ssh/id_ed25519; then
 fi
 sudo chown root:limeade /etc/limeade/ssh/id_ed25519 /etc/limeade/ssh/id_ed25519.pub
 sudo chmod 0640 /etc/limeade/ssh/id_ed25519 /etc/limeade/ssh/id_ed25519.pub
-sudo install -d -o root -g limeade -m 2770 /etc/limeade/history
-sudo chown root:limeade /etc/limeade /etc/limeade/history
+sudo install -d -o limeade -g limeade -m 2770 /etc/limeade/history
+sudo chown root:limeade /etc/limeade
+sudo chown limeade:limeade /etc/limeade/history
 sudo chmod 2750 /etc/limeade
 sudo chmod 2770 /etc/limeade/history
-sudo find /etc/limeade/history -type f -exec chown root:limeade {} + -exec chmod 0660 {} +
+sudo find /etc/limeade/history -type f -exec chown limeade:limeade {} + -exec chmod 0660 {} +
 
 echo "DONE"
