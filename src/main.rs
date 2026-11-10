@@ -1,7 +1,7 @@
 // main.rs
 
 use std::fs::{File, OpenOptions};
-//use std::{thread, time::Duration};
+use std::{thread, time::Duration};
 
 mod compat;
 mod config;
@@ -12,6 +12,7 @@ mod store;
 
 use compat::limeade;
 use config::GlobalConfig;
+use db::db::PacketSerializer;
 
 fn main() {
     /* Initializes configuration for the program */
@@ -28,13 +29,41 @@ fn main() {
         },
     );
 
-    let ctx = match limeade::init() {
-        Ok(ctx) => ctx,
-      Err(error) => {
-        err!("{error}");
+    let store = match PacketSerializer::connect(config.db_directory()) {
+        Ok(store) => store,
+        Err(error) => {
+            err!("Failed to start database: {error}");
             std::process::exit(1);
         }
     };
+
+    let mut ctx = match limeade::init() {
+        Ok(ctx) => ctx,
+        Err(error) => {
+            err!("{error}");
+            std::process::exit(1);
+        }
+    };
+
+    thread::sleep(Duration::from_millis(1000));
+
+    loop {
+        match limeade::recv_wait(&mut ctx, 2000) {
+            Ok(mut recvd) => match store.handle_packet(&mut recvd) {
+                Ok(()) => {}
+                Err(error) => {
+                    err!("Failed to serialize packet: {error}");
+                    break;
+                }
+            },
+            Err(limeade::Error { code, message }) => {
+                if code != limeade::ERROR_NO_DATA as u32 {
+                    err!("Failed to receive packet: {message}");
+                    break;
+                }
+            }
+        }
+    }
 }
 
 /*

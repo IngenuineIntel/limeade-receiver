@@ -1,9 +1,7 @@
 -- ins_intro.sql
 
 INSERT INTO metadata (
-    ts_s
-  , ts_ms
-  , hostname
+    hostname
   , kernelver
   , distro
   , origin_user
@@ -22,6 +20,4 @@ INSERT INTO metadata (
   , ?7
   , ?8
   , ?9
-  , ?10
-  , ?11
 );

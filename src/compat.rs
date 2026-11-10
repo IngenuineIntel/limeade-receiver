@@ -11,25 +11,28 @@ pub mod limeade {
 
     use crate::compat::raw_lib;
 
-    pub type Context    = raw_lib::limeade_context;
+    pub type Context = raw_lib::limeade_context;
     pub type PacketData = raw_lib::limeade_packet_data;
-    pub type Intro      = raw_lib::limeade_introduction;
-    pub type Ack        = raw_lib::limeade_acknowledge;
-    pub type Events     = raw_lib::limeade_events;
-    pub type Event      = raw_lib::limeade_indiv_event;
-    pub type Procs      = raw_lib::limeade_proc_generic;
-    pub type Proc       = raw_lib::limeade_indiv_proc;
-    pub type Perf       = raw_lib::limeade_perf;
+    pub type Intro = raw_lib::limeade_introduction;
+    pub type Ack = raw_lib::limeade_acknowledge;
+    pub type Events = raw_lib::limeade_events;
+    pub type Event = raw_lib::limeade_indiv_event;
+    pub type Procs = raw_lib::limeade_proc_generic;
+    pub type Proc = raw_lib::limeade_indiv_proc;
+    pub type Perf = raw_lib::limeade_perf;
 
-    pub const TYPE_INTRO: u8  = raw_lib::limeade_packet_LIMEADE_PACKET_INTRODUCTION as u8;
+    pub const TYPE_INTRO: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_INTRODUCTION as u8;
     pub const TYPE_EVENTS: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_EVENTS as u8;
-    pub const TYPE_PROC: u8   = raw_lib::limeade_packet_LIMEADE_PACKET_PROC_GENERIC as u8;
-    pub const TYPE_PERF: u8   = raw_lib::limeade_packet_LIMEADE_PACKET_PERF as u8;
+    pub const TYPE_PROC: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_PROC_GENERIC as u8;
+    pub const TYPE_PERF: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_PERF as u8;
+    pub const TYPE_CLOSE: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_CLOSE as u8;
+
+    pub const ERROR_NO_DATA: u8 = raw_lib::limeade_error_LIMEADE_ERROR_NO_DATA as u8;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct Error {
-        code: u32,
-        message: String,
+        pub code: u32,
+        pub message: String,
     }
 
     impl Error {
@@ -68,7 +71,8 @@ pub mod limeade {
                 (raw_lib::limeade_mode_LIMEADE_MODE_HOST_SSH
                     | raw_lib::limeade_compression_mode_LIMEADE_MODE_NO_COMPRESSION)
                     as i32,
-            ) as u32 {
+            ) as u32
+            {
                 LIMEADE_OK!() => Ok(()),
                 e => Err(Error::from_code(e)),
             }
@@ -91,14 +95,11 @@ pub mod limeade {
         Ok(ctx)
     }
 
-    pub fn recv_wait(
-        ctx: &mut Context,
-        recvd: &mut PacketData,
-        wait_time: i32,
-    ) -> Result<(), Error> {
+    pub fn recv_wait(ctx: &mut Context, wait_time: i32) -> Result<PacketData, Error> {
         unsafe {
-            match raw_lib::limeade_recv_wait(ctx, recvd, wait_time) as u32 {
-                LIMEADE_OK!() => Ok(()),
+            let recvd: PacketData = std::mem::zeroed();
+            match raw_lib::limeade_recv_wait(ctx, &mut recvd, wait_time) as u32 {
+                LIMEADE_OK!() => Ok(recvd),
                 e => Err(Error::from_code(e)),
             }
         }
@@ -108,11 +109,11 @@ pub mod limeade {
     macro_rules! pkt_type {
         ($pkt:expr) => {
             unsafe { $pkt.__bindgen_anon_1.packet_type }
-        }
+        };
     }
 
     pub fn pkt_type(pkt: &PacketData) -> u8 {
-      unsafe { pkt.__bindgen_anon_1.packet_type as u8 }
+        unsafe { pkt.__bindgen_anon_1.packet_type as u8 }
     }
 
     pub fn parse_intro(recvd: &mut PacketData) -> Result<Intro, Error> {
@@ -129,8 +130,8 @@ pub mod limeade {
         unsafe {
             let mut events: Events = std::mem::zeroed();
             match raw_lib::limeade_parse_events(&mut events, recvd) as u32 {
-              LIMEADE_OK!() => Ok(events),
-              e => Err(Error::from_code(e)),
+                LIMEADE_OK!() => Ok(events),
+                e => Err(Error::from_code(e)),
             }
         }
     }
@@ -139,8 +140,8 @@ pub mod limeade {
         unsafe {
             let mut procs: Procs = std::mem::zeroed();
             match raw_lib::limeade_parse_proc_generic(&mut procs, recvd) as u32 {
-              LIMEADE_OK!() => Ok(procs),
-              e => Err(Error::from_code(e)),
+                LIMEADE_OK!() => Ok(procs),
+                e => Err(Error::from_code(e)),
             }
         }
     }
@@ -149,8 +150,8 @@ pub mod limeade {
         unsafe {
             let mut perf: Perf = std::mem::zeroed();
             match raw_lib::limeade_parse_perf(&mut perf, recvd) as u32 {
-              LIMEADE_OK!() => Ok(perf),
-              e => Err(Error::from_code(e)),
+                LIMEADE_OK!() => Ok(perf),
+                e => Err(Error::from_code(e)),
             }
         }
     }

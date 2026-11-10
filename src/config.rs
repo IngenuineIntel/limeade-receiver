@@ -59,11 +59,11 @@ impl GlobalConfig {
     .populate_from_dflt()
   }
 
-  pub fn db_directory(&self) -> &str {
+  pub fn db_directory(&self) -> &String {
     &self.db_directory
   }
 
-  pub fn log_file(&self) -> &str {
+  pub fn log_file(&self) -> &String {
     &self.log_file
   }
 }
