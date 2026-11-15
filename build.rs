@@ -22,9 +22,9 @@ fn main() {
     };
 
     cc::Build::new()
-        .file("src/error_reprs_export.c")
+        .file("src/liblimeade_wrapper.c")
         .include(&include_dir)
-        .compile("limeade_error_reprs_export");
+        .compile("limeade_wrapper");
 
     let bindings = bindgen::Builder::default()
         .header(header.to_string_lossy())
@@ -45,7 +45,7 @@ fn main() {
     println!("cargo:rustc-link-search=native=/usr/local/lib");
     println!("cargo:rustc-link-lib=limeade");
     println!("cargo:rerun-if-changed={}", header.display());
-    println!("cargo:rerun-if-changed=src/error_reprs_export.c");
+    println!("cargo:rerun-if-changed=src/liblimeade_wrapper.c");
 }
 
 
