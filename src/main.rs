@@ -95,6 +95,7 @@ fn main() {
                     }
                 } else {
                     err!("Failed to receive packet: {message}");
+                    // TODO send LIMEADE_CLOSED
                     break;
                 }
             }

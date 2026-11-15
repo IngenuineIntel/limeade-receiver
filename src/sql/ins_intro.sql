@@ -12,6 +12,7 @@ INSERT INTO metadata (
   , nr_cores
   , ram_mbs
   , swap_mbs
+  , receiver_proc_pid
 ) VALUES (
     ?1
   , ?2
@@ -24,4 +25,5 @@ INSERT INTO metadata (
   , ?9
   , ?10
   , ?11
+  , ?12
 );

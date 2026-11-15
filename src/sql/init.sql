@@ -12,6 +12,7 @@ CREATE TABLE metadata (
   , nr_cores INTEGER NOT NULL
   , ram_mbs INTEGER NOT NULL
   , swap_mbs INTEGER NOT NULL
+  , receiver_proc_pid INTEGER NOT NULL
 );
 
 CREATE TABLE events (
