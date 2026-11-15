@@ -18,6 +18,8 @@ pub mod limeade {
     pub type Intro = raw_lib::limeade_introduction;
     pub type Events = raw_lib::limeade_events;
     pub type Procs = raw_lib::limeade_proc_generic;
+    #[cfg(test)]
+    pub type IndividualProc = raw_lib::limeade_indiv_proc;
     pub type Perf = raw_lib::limeade_perf;
 
     pub const TYPE_INTRO: u8 = raw_lib::limeade_packet_LIMEADE_PACKET_INTRODUCTION as u8;

@@ -1,26 +1,15 @@
 -- ins_proc.sql
 
-INSERT INTO procs (
-    ts_s
-  , ts_ms
+INSERT INTO proc_samples (
+    snapshot_id
+  , attribute_id
   , pid
-  , ppid
-  , ruid
-  , euid
-  , suid
-  , fsuid
-  , rgid
-  , egid
-  , sgid
-  , fsgid
   , threads
   , ram_kb
   , swap_kb
   , state
   , cpu_user
   , cpu_sys
-  , name
-  , command
 ) VALUES (
     ?1
   , ?2
@@ -31,16 +20,5 @@ INSERT INTO procs (
   , ?7
   , ?8
   , ?9
-  , ?10
-  , ?11
-  , ?12
-  , ?13
-  , ?14
-  , ?15
-  , ?16
-  , ?17
-  , ?18
-  , ?19
-  , ?20
 );
 

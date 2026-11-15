@@ -1,5 +1,7 @@
 -- init.sql
 
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE metadata (
     ts_s INTEGER NOT NULL
   , ts_ms INTEGER NOT NULL
@@ -26,14 +28,14 @@ CREATE TABLE events (
   , retval INTEGER NOT NULL
 );
 
--- note: a single process in this table will be visible as a series of
--- different entries, as the distinction between processes will be done by any
--- program that parses this data
-CREATE TABLE procs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT
+CREATE TABLE proc_snapshots (
+    id INTEGER PRIMARY KEY
   , ts_s INTEGER NOT NULL
   , ts_ms INTEGER NOT NULL
-  , pid INTEGER NOT NULL
+);
+
+CREATE TABLE proc_attributes (
+    id INTEGER PRIMARY KEY
   , ppid INTEGER NOT NULL
   , ruid INTEGER NOT NULL
   , euid INTEGER NOT NULL
@@ -43,15 +45,34 @@ CREATE TABLE procs (
   , egid INTEGER NOT NULL
   , sgid INTEGER NOT NULL
   , fsgid INTEGER NOT NULL
+  , name TEXT NOT NULL
+  , command TEXT NOT NULL
+  , UNIQUE (ppid, ruid, euid, suid, fsuid, rgid, egid, sgid, fsgid, name, command)
+);
+
+CREATE TABLE proc_samples (
+    id INTEGER PRIMARY KEY AUTOINCREMENT
+  , snapshot_id INTEGER NOT NULL REFERENCES proc_snapshots(id)
+  , attribute_id INTEGER NOT NULL REFERENCES proc_attributes(id)
+  , pid INTEGER NOT NULL
   , threads INTEGER NOT NULL
   , ram_kb INTEGER NOT NULL
   , swap_kb INTEGER NOT NULL
   , state TEXT NOT NULL
   , cpu_user INTEGER NOT NULL
   , cpu_sys INTEGER NOT NULL
-  , name TEXT
-  , command TEXT
 );
+
+CREATE VIEW procs AS
+SELECT samples.id, snapshots.ts_s, snapshots.ts_ms, samples.pid,
+       attributes.ppid, attributes.ruid, attributes.euid, attributes.suid,
+       attributes.fsuid, attributes.rgid, attributes.egid, attributes.sgid,
+       attributes.fsgid, samples.threads, samples.ram_kb, samples.swap_kb,
+       samples.state, samples.cpu_user, samples.cpu_sys, attributes.name,
+       attributes.command
+FROM proc_samples AS samples
+JOIN proc_snapshots AS snapshots ON snapshots.id = samples.snapshot_id
+JOIN proc_attributes AS attributes ON attributes.id = samples.attribute_id;
 
 CREATE TABLE perf (
     ts_s INTEGER NOT NULL
