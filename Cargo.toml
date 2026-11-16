@@ -8,6 +8,8 @@ configparser="3.3.0"
 chrono="0.4.45"
 rusqlite = "0.41.1"
 libc = "0.2.191"
+zstd = "0.13"
+csv = "1"
 
 [build-dependencies]
 bindgen = "0.73"

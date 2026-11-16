@@ -50,29 +50,12 @@ CREATE TABLE proc_attributes (
   , UNIQUE (ppid, ruid, euid, suid, fsuid, rgid, egid, sgid, fsgid, name, command)
 );
 
-CREATE TABLE proc_samples (
-    id INTEGER PRIMARY KEY AUTOINCREMENT
-  , snapshot_id INTEGER NOT NULL REFERENCES proc_snapshots(id)
-  , attribute_id INTEGER NOT NULL REFERENCES proc_attributes(id)
-  , pid INTEGER NOT NULL
-  , threads INTEGER NOT NULL
-  , ram_kb INTEGER NOT NULL
-  , swap_kb INTEGER NOT NULL
-  , state TEXT NOT NULL
-  , cpu_user INTEGER NOT NULL
-  , cpu_sys INTEGER NOT NULL
+CREATE TABLE proc_batches (
+    snapshot_id INTEGER PRIMARY KEY REFERENCES proc_snapshots(id)
+  , first_sample_id INTEGER NOT NULL CHECK (first_sample_id > 0)
+  , sample_count INTEGER NOT NULL CHECK (sample_count BETWEEN 0 AND 65535)
+  , data BLOB NOT NULL
 );
-
-CREATE VIEW procs AS
-SELECT samples.id, snapshots.ts_s, snapshots.ts_ms, samples.pid,
-       attributes.ppid, attributes.ruid, attributes.euid, attributes.suid,
-       attributes.fsuid, attributes.rgid, attributes.egid, attributes.sgid,
-       attributes.fsgid, samples.threads, samples.ram_kb, samples.swap_kb,
-       samples.state, samples.cpu_user, samples.cpu_sys, attributes.name,
-       attributes.command
-FROM proc_samples AS samples
-JOIN proc_snapshots AS snapshots ON snapshots.id = samples.snapshot_id
-JOIN proc_attributes AS attributes ON attributes.id = samples.attribute_id;
 
 CREATE TABLE perf (
     ts_s INTEGER NOT NULL

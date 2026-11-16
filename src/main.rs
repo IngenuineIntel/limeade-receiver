@@ -12,6 +12,7 @@ mod compat;
 mod config;
 mod db;
 mod log;
+mod proc_batch;
 
 use compat::limeade;
 use config::GlobalConfig;
@@ -48,6 +49,26 @@ fn open_log_file(path: &str) -> std::io::Result<File> {
 }
 
 fn main() {
+    let mut args = std::env::args_os().skip(1);
+    if let Some(command) = args.next() {
+        if command == "--export-procs" {
+            let Some(path) = args.next().filter(|_| args.next().is_none()) else {
+                eprintln!("Usage: limeade-receiver --export-procs DATABASE");
+                std::process::exit(2);
+            };
+            let result = rusqlite::Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+                .map_err(|error| -> Box<dyn std::error::Error> { Box::new(error) })
+                .and_then(|conn| db::db::export_procs(&conn, std::io::stdout().lock()));
+            if let Err(error) = result {
+                eprintln!("Failed to export process samples: {error}");
+                std::process::exit(1);
+            }
+            return;
+        }
+        eprintln!("Unknown argument: {}", command.to_string_lossy());
+        std::process::exit(2);
+    }
+
     /* Initializes configuration for the program */
     let config_file = File::open("/etc/limeade/limeade-receiver.ini").ok();
     let config = GlobalConfig::new(config_file);
