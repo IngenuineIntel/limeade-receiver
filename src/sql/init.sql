@@ -33,24 +33,7 @@ CREATE TABLE procs (
     id INTEGER PRIMARY KEY AUTOINCREMENT
   , ts_s INTEGER NOT NULL
   , ts_ms INTEGER NOT NULL
-  , pid INTEGER NOT NULL
-  , ppid INTEGER NOT NULL
-  , ruid INTEGER NOT NULL
-  , euid INTEGER NOT NULL
-  , suid INTEGER NOT NULL
-  , fsuid INTEGER NOT NULL
-  , rgid INTEGER NOT NULL
-  , egid INTEGER NOT NULL
-  , sgid INTEGER NOT NULL
-  , fsgid INTEGER NOT NULL
-  , threads INTEGER NOT NULL
-  , ram_kb INTEGER NOT NULL
-  , swap_kb INTEGER NOT NULL
-  , state TEXT NOT NULL
-  , cpu_user INTEGER NOT NULL
-  , cpu_sys INTEGER NOT NULL
-  , name TEXT
-  , command TEXT
+  , data BLOB NOT NULL
 );
 
 CREATE TABLE perf (

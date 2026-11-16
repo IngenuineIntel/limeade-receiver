@@ -3,12 +3,15 @@
 pub mod db {
     use std::ffi::CStr;
     use std::fs::{OpenOptions, Permissions};
+    use std::io::Write;
     use std::os::raw::c_char;
     use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
     use std::path::PathBuf;
 
     use chrono::Local;
-    use rusqlite::{Connection, Result, params};
+    use rusqlite::{params, Connection, Result};
+    use serde_json::{Map, Value};
+    use zstd;
 
     use crate::compat::limeade;
 
@@ -42,7 +45,11 @@ pub mod db {
     impl PacketSerializer {
         pub fn connect(db_directory: &String) -> Result<Self, Box<dyn std::error::Error>> {
             let path = resolve_db_path(db_directory);
-            let file = OpenOptions::new().write(true).create_new(true).mode(0o600).open(&path)?;
+            let file = OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .mode(0o600)
+                .open(&path)?;
             file.set_permissions(Permissions::from_mode(0o660))?;
             let conn = Connection::open(path)?;
             conn.execute_batch(DB_INIT)?;
@@ -100,38 +107,45 @@ pub mod db {
                     transaction.commit()?;
                 }
                 limeade::TYPE_PROC => {
+                    /* snapshots are converted into JSON, then compressed via
+                     * Zstd (level 5)
+                     * while JSON inside a database is (justifiably) considered
+                     * unidiomatic, there was no more convenient way to store
+                     * the data while keeping it compressed */
                     let procs = limeade::parse_proc(pkt)?;
                     if procs.procs.is_null() {
                         return Err("procs array is NULL".into());
                     }
-                    let transaction = self.conn.unchecked_transaction()?;
-                    for proc in c_arr!(procs.procs, procs.total) {
-                        transaction.execute(
-                            INS_PROC,
-                            params![
-                                procs.ts_s,
-                                procs.ts_ms,
-                                proc.pid,
-                                proc.ppid,
-                                proc.ruid,
-                                proc.euid,
-                                proc.suid,
-                                proc.fsuid,
-                                proc.rgid,
-                                proc.egid,
-                                proc.sgid,
-                                proc.fsgid,
-                                proc.threads,
-                                proc.ram_kb,
-                                proc.swap_kb,
-                                proc.state.to_string(),
-                                proc.cpu_user,
-                                proc.cpu_sys,
-                                c_string(proc.name),
-                                c_string(proc.command)
-                            ]
-                        )?;
+                    let data = c_arr!(procs.procs, procs.total);
+                    let mut arr = Vec::with_capacity(data.len());
+
+                    for proc in data {
+                        let mut obj = Map::new();
+                        obj.insert("pid".into(), Value::Number(proc.pid.into()));
+                        obj.insert("ppid".into(), Value::Number(proc.ppid.into()));
+                        obj.insert("ruid".into(), Value::Number(proc.ruid.into()));
+                        obj.insert("euid".into(), Value::Number(proc.euid.into()));
+                        obj.insert("suid".into(), Value::Number(proc.suid.into()));
+                        obj.insert("fsuid".into(), Value::Number(proc.fsuid.into()));
+                        obj.insert("threads".into(), Value::Number(proc.threads.into()));
+                        obj.insert("ram_kb".into(), Value::Number(proc.ram_kb.into()));
+                        obj.insert("swap_kb".into(), Value::Number(proc.swap_kb.into()));
+                        obj.insert("state".into(), Value::String(proc.state.to_string()));
+                        obj.insert("cpu_user".into(), Value::Number(proc.cpu_user.into()));
+                        obj.insert("cpu_sys".into(), Value::Number(proc.cpu_sys.into()));
+                        obj.insert("name".into(), Value::String(c_string(proc.name)));
+                        obj.insert("command".into(), Value::String(c_string(proc.command)));
+
+                        arr.push(Value::Object(obj));
                     }
+
+                    let mut encoder = zstd::stream::Encoder::new(Vec::new(), 7).unwrap();
+                    encoder.write_all(Value::Array(arr).to_string().as_bytes())?;
+                    let transaction = self.conn.unchecked_transaction()?;
+                    self.conn.execute(
+                        INS_PROC,
+                        params![procs.ts_s, procs.ts_ms, encoder.finish()?],
+                    )?;
                     transaction.commit()?;
                 }
                 limeade::TYPE_PERF => {
@@ -164,13 +178,34 @@ pub mod db {
         fn packet_inserts_match_schema() {
             let conn = Connection::open_in_memory().unwrap();
             conn.execute_batch(DB_INIT).unwrap();
-            conn.execute(INS_INTRO, params![1, 2, "host", "kernel", "distro", "user", "cpu", "vendor", 4, 8, 16]).unwrap();
-            conn.execute(INS_EVENTS, params![1, 2, 3, "open", "arg1", "arg2", 0]).unwrap();
-            conn.execute(INS_PROC, params![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, "R", 16, 17, "name", "command"]).unwrap();
-            conn.execute(INS_PERF, params![1, 2, 3, 4, 5, 6, 7, 8]).unwrap();
-            let syscall: String = conn.query_row("SELECT syscall FROM events", [], |row| row.get(0)).unwrap();
+            conn.execute(
+                INS_INTRO,
+                params![1, 2, "host", "kernel", "distro", "user", "cpu", "vendor", 4, 8, 16, 999],
+            )
+            .unwrap();
+            conn.execute(INS_EVENTS, params![1, 2, 3, "open", "arg1", "arg2", 0])
+                .unwrap();
+            let compressed = zstd::stream::encode_all(b"[]".as_slice(), 5).unwrap();
+            conn.execute(INS_PROC, params![1, 2, compressed]).unwrap();
+            conn.execute(INS_PERF, params![1, 2, 3, 4, 5, 6, 7, 8])
+                .unwrap();
+            let syscall: String = conn
+                .query_row("SELECT syscall FROM events", [], |row| row.get(0))
+                .unwrap();
             assert_eq!(syscall, "open");
-            let timestamp: (u32, u32) = conn.query_row("SELECT ts_s, ts_ms FROM perf", [], |row| Ok((row.get(0)?, row.get(1)?))).unwrap();
+            let compressed: Vec<u8> = conn
+                .query_row("SELECT data FROM procs", [], |row| row.get(0))
+                .unwrap();
+            let process_snapshot = zstd::stream::decode_all(compressed.as_slice()).unwrap();
+            assert_eq!(
+                serde_json::from_slice::<Value>(&process_snapshot).unwrap(),
+                Value::Array(vec![])
+            );
+            let timestamp: (u32, u32) = conn
+                .query_row("SELECT ts_s, ts_ms FROM perf", [], |row| {
+                    Ok((row.get(0)?, row.get(1)?))
+                })
+                .unwrap();
             assert_eq!(timestamp, (1, 2));
         }
 
@@ -179,12 +214,23 @@ pub mod db {
             let directory = std::env::temp_dir().join(format!(
                 "limeade-receiver-test-{}-{}",
                 std::process::id(),
-                std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
             ));
             std::fs::create_dir(&directory).unwrap();
-            let store = PacketSerializer::connect(&directory.to_string_lossy().into_owned()).unwrap();
-            let entry = std::fs::read_dir(&directory).unwrap().next().unwrap().unwrap();
-            assert_eq!(entry.metadata().unwrap().permissions().mode() & 0o777, 0o660);
+            let store =
+                PacketSerializer::connect(&directory.to_string_lossy().into_owned()).unwrap();
+            let entry = std::fs::read_dir(&directory)
+                .unwrap()
+                .next()
+                .unwrap()
+                .unwrap();
+            assert_eq!(
+                entry.metadata().unwrap().permissions().mode() & 0o777,
+                0o660
+            );
             drop(store);
             std::fs::remove_dir_all(directory).unwrap();
         }
