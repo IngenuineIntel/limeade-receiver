@@ -5,7 +5,6 @@ INSERT INTO perf (
   , ts_ms
   , perc_cpu_user
   , perc_cpu_sys
-  , mem_total_kb
   , mem_free_kb
   , mem_available_kb
   , mem_cached_kb
@@ -17,5 +16,4 @@ INSERT INTO perf (
   , ?5
   , ?6
   , ?7
-  , ?8
 );

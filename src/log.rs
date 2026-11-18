@@ -79,35 +79,35 @@ macro_rules! pid_sect {
 #[macro_export]
 macro_rules! dbg {
   ($($args:tt)*) => {
-    let _ = writeln!(crate::log_out!(), "{}{}[{}DBUG{}]: {}", timestamp!(), pid_sect!(), crate::log::ANSI_CYAN, crate::log::ANSI_RESET, format_args!($($args)*));
+    let _ = writeln!(crate::log_out!(), "{}{}[{}DBUG{}]: {}", pid_sect!(), timestamp!(), crate::log::ANSI_CYAN, crate::log::ANSI_RESET, format_args!($($args)*));
   }
 }
 
 #[macro_export]
 macro_rules! info {
   ($($args:tt)*) => {
-    let _ = writeln!(crate::log_out!(), "{}{}[{}INFO{}]: {}", timestamp!(), pid_sect!(), crate::log::ANSI_GREEN, crate::log::ANSI_RESET, format_args!($($args)*));
+    let _ = writeln!(crate::log_out!(), "{}{}[{}INFO{}]: {}", pid_sect!(), timestamp!(), crate::log::ANSI_GREEN, crate::log::ANSI_RESET, format_args!($($args)*));
   }
 }
 
 #[macro_export]
 macro_rules! warn {
   ($($args:tt)*) => {
-    let _ = writeln!(crate::log_out!(), "{}{}[{}WARN{}]: {}", timestamp!(), pid_sect!(), crate::log::ANSI_YELLOW, crate::log::ANSI_RESET, format_args!($($args)*));
+    let _ = writeln!(crate::log_out!(), "{}{}[{}WARN{}]: {}", pid_sect!(), timestamp!(), crate::log::ANSI_YELLOW, crate::log::ANSI_RESET, format_args!($($args)*));
   }
 }
 
 #[macro_export]
 macro_rules! crit {
   ($($args:tt)*) => {
-    let _ = writeln!(crate::log_out!(), "{}{}[{}CRIT{}]: {}", timestamp!(), pid_sect!(), crate::log::ANSI_RED, crate::log::ANSI_RESET, format_args!($($args)*));
+    let _ = writeln!(crate::log_out!(), "{}{}[{}CRIT{}]: {}", pid_sect!(), timestamp!(), crate::log::ANSI_RED, crate::log::ANSI_RESET, format_args!($($args)*));
   }
 }
 
 #[macro_export]
 macro_rules! err {
   ($($args:tt)*) => {
-    let _ = writeln!(crate::log_out!(), "{}{}[{}ERRR{}]: {}", timestamp!(), pid_sect!(), crate::log::ANSI_RED, crate::log::ANSI_RESET, format_args!($($args)*));
+    let _ = writeln!(crate::log_out!(), "{}{}[{}ERRR{}]: {}", pid_sect!(), timestamp!(), crate::log::ANSI_RED, crate::log::ANSI_RESET, format_args!($($args)*));
   }
 }
 

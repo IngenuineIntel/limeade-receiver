@@ -157,7 +157,6 @@ pub mod db {
                             perf.ts_ms,
                             perf.perc_cpu_user,
                             perf.perc_cpu_sys,
-                            perf.mem_total_kb,
                             perf.mem_free_kb,
                             perf.mem_available_kb,
                             perf.mem_cached_kb,

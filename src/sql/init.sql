@@ -41,7 +41,6 @@ CREATE TABLE perf (
   , ts_ms INTEGER NOT NULL
   , perc_cpu_user INTEGER NOT NULL
   , perc_cpu_sys INTEGER NOT NULL
-  , mem_total_kb INTEGER NOT NULL
   , mem_free_kb INTEGER NOT NULL
   , mem_available_kb INTEGER NOT NULL
   , mem_cached_kb INTEGER NOT NULL
